@@ -10,11 +10,16 @@ import math
 
 array = np.array([[200, 500], [200, 450], [140, 450], [140, 150], [400, 150]])
 
-SCALE = 10000  # 1 : 10.000
+# array = np.array([[200, 500], [200, 501]])
+# array = np.array([[200, 500], [200, 501], [200, 502]])
+SCALE = 3  # 1 : SCALE m
+FORKLIFT_VELOCITY = 10  # km/h
+PIXEL_TO_CM_CONVERSOR = 0.0264583333
+
 
 # creating class for window
 class Window(QMainWindow):
-    def __init__(self):
+    def __init__(self, listOfQPoints):
         super().__init__()
 
         title = "Paint and save Application"
@@ -55,7 +60,7 @@ class Window(QMainWindow):
         saveAction.triggered.connect(self.save)
 
         # calling draw_something method
-        self.draw_something()
+        self.draw_something(array)
 
     # paintEvent for creating blank canvas
     def paintEvent(self, event):
@@ -63,14 +68,14 @@ class Window(QMainWindow):
         canvasPainter.drawImage(self.rect(), self.image, self.image.rect())
 
     # this method will draw a line
-    def draw_something(self):
+    def draw_something(self, array: np.ndarray):
 
         painter = QPainter(self.image)
 
         painter.setPen(QPen(Qt.green, 5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
 
         # drawing a line
-        _drawCustomLine(painter, _returnListOfPoints())
+        _drawCustomLine(painter, listOfQPoints)
 
         # updating it to canvas
         self.update()
@@ -91,58 +96,90 @@ class Window(QMainWindow):
         self.image.save(filePath)
 
 
-def _returnListOfPoints():
+def _returnListOfPoints(array: np.ndarray):
+    listOfQPoints = list()
     listOfPoints = list()
     for i in range(len(array)):
-        point = QPoint(array[i][0], array[i][1])
+        qPoint = QPoint(array[i][0], array[i][1])
+        point = Point(array[i][0], array[i][1])
+        listOfQPoints.append(qPoint)
         listOfPoints.append(point)
-    return listOfPoints
+    return listOfPoints, listOfQPoints
 
 
-def _drawCustomLine(painter: QPainter, listOfPoints: list):
-    for i in range(len(listOfPoints) - 1):
-        currentPoint = listOfPoints[i]
-        nextPoint = listOfPoints[i + 1]
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+def _drawCustomLine(painter: QPainter, listOfQPoints: list):
+    for i in range(len(listOfQPoints) - 1):
+        currentPoint = listOfQPoints[i]
+        nextPoint = listOfQPoints[i + 1]
         painter.drawLine(currentPoint, nextPoint)
 
 
-def _changePointScale(point: QPoint) -> QPoint:
-    point.setX(point.x() * SCALE)
-    point.setY(point.y() * SCALE)
-    return point
+def _changePointToRealScale(point: Point) -> Point:
+    newPoint = Point(
+        point.x * SCALE * PIXEL_TO_CM_CONVERSOR, point.y * SCALE * PIXEL_TO_CM_CONVERSOR
+    )
 
-
-def _calculateDistance(listOfPoints: list):
-    for i in range(len(listOfPoints) - 1):
-        currentPoint = _changePointScale(listOfPoints[i])
-        nextPoint = _changePointScale(listOfPoints[i + 1])
-        distance = math.sqrt(
-            (nextPoint.x() - currentPoint.x()) ** 2
-            + (nextPoint.y() - currentPoint.y()) ** 2
-        )
-
-        return distance
+    return newPoint
 
 
 def _calculateDistanceInRealScale(listOfPoints: list):
+    distance = 0
+    for i in range(len(listOfPoints) - 1):
+        currentPoint = _changePointToRealScale(listOfPoints[i])
+        nextPoint = _changePointToRealScale(listOfPoints[i + 1])
+        if (
+            (nextPoint.x - currentPoint.x) ** 2 + (nextPoint.y - currentPoint.y) ** 2
+        ) > 0:
+            distance = distance + math.sqrt(
+                (nextPoint.x - currentPoint.x) ** 2
+                + (nextPoint.y - currentPoint.y) ** 2
+            )
+
+    return round(distance, 2)
+
+
+def _calculateDistance(listOfPoints: list):
+    distance = 0
     for i in range(len(listOfPoints) - 1):
         currentPoint = listOfPoints[i]
         nextPoint = listOfPoints[i + 1]
-        distance = math.sqrt(
+        distance = distance + math.sqrt(
             (nextPoint.x() - currentPoint.x()) ** 2
             + (nextPoint.y() - currentPoint.y()) ** 2
         )
+    return round(distance, 2)
 
-        return distance
+
+def _convertToMeterPerSecond(velocityKmH):
+    return velocityKmH / 3.6
+
+
+def _returnTimeSpent(velocityKmH, spaceMeters):
+    if velocityKmH is 0:
+        return 0
+    else:
+        return round(spaceMeters / _convertToMeterPerSecond(velocityKmH), 2)
 
 
 # main method
 if __name__ == "__main__":
+    listOfPoints, listOfQPoints = _returnListOfPoints(array)
+
     app = QApplication(sys.argv)
-    window = Window()
+    window = Window(listOfQPoints)
     window.show()
 
-    print("Real distance: " + str(_calculateDistance(_returnListOfPoints())) + " m")
+    distance = _calculateDistanceInRealScale(listOfPoints)
+
+    print("Real distance: " + str(distance) + " m")
+    print("Velocity: " + str(FORKLIFT_VELOCITY) + " km/h")
+    print("Time spent: " + str(_returnTimeSpent(FORKLIFT_VELOCITY, distance)) + " s")
 
     # looping for window
     sys.exit(app.exec())
