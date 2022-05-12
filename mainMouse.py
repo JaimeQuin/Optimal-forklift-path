@@ -26,6 +26,8 @@ PIXEL_TO_CM_CONVERSOR = 0.0264583333
 WIDTH = 1280  # Pixels
 HEIGTH = 960  # Pixels
 
+lista = list()
+
 
 # creating class for window
 class Window(QMainWindow):
@@ -63,6 +65,9 @@ class Window(QMainWindow):
         # setting triggered method
         saveAction.triggered.connect(self.save)
 
+        self.last_x, self.last_y = None, None
+
+    """
     # paintEvent for creating blank canvas
     def paintEvent(self, event):
         canvasPainter = QPainter(self)
@@ -80,6 +85,32 @@ class Window(QMainWindow):
 
         # updating it to canvas
         self.update()
+    """
+
+    def mouseMoveEvent(self, e):
+        if self.last_x is None:  # First event.
+            self.last_x = e.x()
+            self.last_y = e.y()
+
+            return  # Ignore the first time.
+
+        canvasPainter = QPainter(self)
+        pixmap = QPixmap("snapshot3.png")
+        canvasPainter.drawPixmap(self.rect(), pixmap)
+        canvasPainter.setPen(QPen(Qt.red, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        canvasPainter.drawLine(self.last_x, self.last_y, e.x(), e.y())
+        canvasPainter.end()
+        self.update()
+
+        # Update the origin for next time.
+        self.last_x = e.x()
+        self.last_y = e.y()
+        qPoint = QPoint(self.last_x, self.last_y)
+        lista.append(qPoint)
+
+    def mouseReleaseEvent(self, e):
+        self.last_x = None
+        self.last_y = None
 
     # save method
     def save(self):
