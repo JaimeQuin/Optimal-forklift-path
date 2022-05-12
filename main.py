@@ -8,38 +8,45 @@ from matplotlib import scale
 import numpy as np
 import math
 
-array = np.array([[200, 500], [200, 450], [140, 450], [140, 150], [400, 150]])
+ARRAY = np.array([[340, 780], [340, 660], [190, 660], [190, 350], [380, 350]])
+
+CALIBRATION_VELOCITY = 10  # km/h
+
+X_AXIS_REAL_DISTANCE = 101.6  # m CHECK
+X_AXIS = np.array([[0, 480], [1280, 480]])  # X Axis
+X_AXIS_REAL_TIME_10_KMH = X_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s
+
+
+Y_AXIS_REAL_DISTANCE = 76.2  # m CHECK
+Y_AXIS = np.array([[640, 0], [640, 960]])  # Y Axis
+Y_AXIS_REAL_TIME_10_KMH = Y_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s CHECK
 
 # array = np.array([[200, 500], [200, 501]])
 # array = np.array([[200, 500], [200, 501], [200, 502]])
 SCALE = 3  # 1 : SCALE m
 FORKLIFT_VELOCITY = 10  # km/h
 PIXEL_TO_CM_CONVERSOR = 0.0264583333
+WIDTH = 1280
+HEIGTH = 960
 
 
 # creating class for window
 class Window(QMainWindow):
-    def __init__(self, listOfQPoints):
+    def __init__(self):
         super().__init__()
 
         title = "Paint and save Application"
-
-        top = 400
-        left = 400
-        width = 800
-        height = 600
 
         # setting title of window
         self.setWindowTitle(title)
 
         # setting geometry
-        self.setGeometry(top, left, width, height)
+        self.setFixedSize(WIDTH, HEIGTH)
+        # self.showMaximized()
+        # self.showFullScreen()
 
         # creating canvas
         self.image = QImage(self.size(), QImage.Format_RGB32)
-
-        # setting canvas color to white
-        self.image.fill(Qt.white)
 
         # creating menu bar
         mainMenu = self.menuBar()
@@ -59,23 +66,20 @@ class Window(QMainWindow):
         # setting triggered method
         saveAction.triggered.connect(self.save)
 
-        # calling draw_something method
-        self.draw_something(array)
-
     # paintEvent for creating blank canvas
     def paintEvent(self, event):
         canvasPainter = QPainter(self)
-        canvasPainter.drawImage(self.rect(), self.image, self.image.rect())
+        pixmap = QPixmap("snapshot3.png")
+        canvasPainter.drawPixmap(self.rect(), pixmap)
 
-    # this method will draw a line
-    def draw_something(self, array: np.ndarray):
+        # drawing axis
+        canvasPainter.setPen(QPen(Qt.red, 2, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin))
+        _drawCustomLine(canvasPainter, xAxisQPoints)
+        _drawCustomLine(canvasPainter, yAxisQPoints)
 
-        painter = QPainter(self.image)
-
-        painter.setPen(QPen(Qt.green, 5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-
-        # drawing a line
-        _drawCustomLine(painter, listOfQPoints)
+        # drawing real path
+        canvasPainter.setPen(QPen(Qt.green, 5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        _drawCustomLine(canvasPainter, listOfQPoints)
 
         # updating it to canvas
         self.update()
@@ -96,15 +100,25 @@ class Window(QMainWindow):
         self.image.save(filePath)
 
 
-def _returnListOfPoints(array: np.ndarray):
+def _returnListOfQPoints(array: np.ndarray):
     listOfQPoints = list()
-    listOfPoints = list()
     for i in range(len(array)):
         qPoint = QPoint(array[i][0], array[i][1])
-        point = Point(array[i][0], array[i][1])
+
         listOfQPoints.append(qPoint)
+
+    return listOfQPoints
+
+
+def _returnListOfPoints(array: np.ndarray):
+
+    listOfPoints = list()
+    for i in range(len(array)):
+
+        point = Point(array[i][0], array[i][1])
+
         listOfPoints.append(point)
-    return listOfPoints, listOfQPoints
+    return listOfPoints
 
 
 class Point:
@@ -169,14 +183,48 @@ def _returnTimeSpent(velocityKmH, spaceMeters):
 
 # main method
 if __name__ == "__main__":
-    listOfPoints, listOfQPoints = _returnListOfPoints(array)
+    xAxisQPoints = _returnListOfQPoints(X_AXIS)
+    xAxisPoints = _returnListOfPoints(X_AXIS)
+    yAxisQPoints = _returnListOfQPoints(Y_AXIS)
+    yAxisPoints = _returnListOfPoints(Y_AXIS)
+
+    listOfPoints = _returnListOfPoints(ARRAY)
+    listOfQPoints = _returnListOfQPoints(ARRAY)
 
     app = QApplication(sys.argv)
-    window = Window(listOfQPoints)
+    window = Window()
     window.show()
+    # Real distances of axis to calibrate
+    xCalibrationDistance = _calculateDistanceInRealScale(xAxisPoints)
+    yCalibrationDistance = _calculateDistanceInRealScale(yAxisPoints)
 
+    # Path distance
     distance = _calculateDistanceInRealScale(listOfPoints)
 
+    # Printing in terminal calibration data
+    print("##########################################################")
+    print("CALIBRATION:\n")
+    print("X-Axis real distance is: " + str(X_AXIS_REAL_DISTANCE) + " m")
+    print("X-Axis calculated distance is: " + str(xCalibrationDistance) + " m\n")
+    print("X-Axis real time is: " + str(round(X_AXIS_REAL_TIME_10_KMH, 2)) + " s")
+    print(
+        "X-Axis calculated time is: "
+        + str(_returnTimeSpent(CALIBRATION_VELOCITY, xCalibrationDistance))
+        + " s\n"
+    )
+
+    print("Y-Axis real distance is: " + str(Y_AXIS_REAL_DISTANCE) + " m")
+    print("Y-Axis calculated distance is: " + str(yCalibrationDistance) + " m\n")
+    print("Y-Axis real time is: " + str(round(Y_AXIS_REAL_TIME_10_KMH, 2)) + " s")
+    print(
+        "Y-Axis calculated time is: "
+        + str(_returnTimeSpent(CALIBRATION_VELOCITY, yCalibrationDistance))
+        + " s\n"
+    )
+    print("##########################################################")
+
+    # Printing in terminal path data
+    print("PATH:\n")
     print("Real distance: " + str(distance) + " m")
     print("Velocity: " + str(FORKLIFT_VELOCITY) + " km/h")
     print("Time spent: " + str(_returnTimeSpent(FORKLIFT_VELOCITY, distance)) + " s")
