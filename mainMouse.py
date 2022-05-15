@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import sys
-from matplotlib import scale
 import numpy as np
 import math
 
@@ -36,6 +35,11 @@ class Window(QMainWindow):
 
         title = "Paint and save Application"
 
+        self.label = QLabel()
+        canvas = QPixmap("snapshot3.png")
+        self.label.setPixmap(canvas)
+        self.setCentralWidget(self.label)
+
         # setting title of window
         self.setWindowTitle(title)
 
@@ -67,12 +71,11 @@ class Window(QMainWindow):
 
         self.last_x, self.last_y = None, None
 
-    """
+
     # paintEvent for creating blank canvas
     def paintEvent(self, event):
-        canvasPainter = QPainter(self)
-        pixmap = QPixmap("snapshot3.png")
-        canvasPainter.drawPixmap(self.rect(), pixmap)
+        canvasPainter = QPainter(self.label.pixmap())
+
 
         # drawing axis
         canvasPainter.setPen(QPen(Qt.red, 2, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin))
@@ -85,7 +88,7 @@ class Window(QMainWindow):
 
         # updating it to canvas
         self.update()
-    """
+
 
     def mouseMoveEvent(self, e):
         if self.last_x is None:  # First event.
@@ -94,9 +97,7 @@ class Window(QMainWindow):
 
             return  # Ignore the first time.
 
-        canvasPainter = QPainter(self)
-        pixmap = QPixmap("snapshot3.png")
-        canvasPainter.drawPixmap(self.rect(), pixmap)
+        canvasPainter = QPainter(self.label.pixmap())
         canvasPainter.setPen(QPen(Qt.red, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         canvasPainter.drawLine(self.last_x, self.last_y, e.x(), e.y())
         canvasPainter.end()

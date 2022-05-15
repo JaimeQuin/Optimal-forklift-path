@@ -3,28 +3,32 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import sys
-from matplotlib import scale
 import numpy as np
 import math
+import path
 
-ARRAY = np.array([[340, 780], [340, 660], [190, 660], [190, 350], [380, 350]])
-
+#ARRAY = np.array([[340, 780], [340, 660], [190, 660], [190, 350], [380, 350]])
+ARRAY = path.ARRAY
 CALIBRATION_VELOCITY = 10  # km/h
 
+RATIO = 1
+WIDTH = 1246*RATIO  # Pixels
+HEIGTH = 884*RATIO # Pixels
+
 X_AXIS_REAL_DISTANCE = 101.6  # m CHECK
-X_AXIS = np.array([[0, 480], [1280, 480]])  # X Axis
+X_AXIS = np.array([[0, HEIGTH/2], [WIDTH, HEIGTH/2]])  # X Axis
 X_AXIS_REAL_TIME_10_KMH = X_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s
 
 
 Y_AXIS_REAL_DISTANCE = 76.2  # m CHECK
-Y_AXIS = np.array([[640, 0], [640, 960]])  # Y Axis
+Y_AXIS = np.array([[WIDTH/2, 0], [WIDTH/2, HEIGTH]])  # Y Axis
 Y_AXIS_REAL_TIME_10_KMH = Y_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s CHECK
 
-SCALE = 3  # 1 : SCALE m
+SCALE = 425  # 1 : SCALE mm
+CONVERSOR_MM_M = 1000
 FORKLIFT_VELOCITY = 10  # km/h
-PIXEL_TO_CM_CONVERSOR = 0.0264583333
-WIDTH = 1280  # Pixels
-HEIGTH = 960  # Pixels
+PIXEL_TO_MM_CONVERSOR = 0.264583333
+
 
 
 # creating class for window
@@ -38,7 +42,7 @@ class Window(QMainWindow):
         self.setWindowTitle(title)
 
         # setting geometry
-        self.setFixedSize(WIDTH, HEIGTH)
+        self.setFixedSize(int(WIDTH), int(HEIGTH))
         # self.showMaximized()
         # self.showFullScreen()
 
@@ -66,7 +70,7 @@ class Window(QMainWindow):
     # paintEvent for creating blank canvas
     def paintEvent(self, event):
         canvasPainter = QPainter(self)
-        pixmap = QPixmap("snapshot3.png")
+        pixmap = QPixmap("layout vacío.png")
         canvasPainter.drawPixmap(self.rect(), pixmap)
 
         # drawing axis
@@ -100,7 +104,7 @@ class Window(QMainWindow):
 def _returnListOfQPoints(array: np.ndarray):
     listOfQPoints = list()
     for i in range(len(array)):
-        qPoint = QPoint(array[i][0], array[i][1])
+        qPoint = QPoint(int(array[i][0]), int(array[i][1]))
 
         listOfQPoints.append(qPoint)
 
@@ -133,7 +137,7 @@ def _drawCustomLine(painter: QPainter, listOfQPoints: list):
 
 def _changePointToRealScale(point: Point) -> Point:
     newPoint = Point(
-        point.x * SCALE * PIXEL_TO_CM_CONVERSOR, point.y * SCALE * PIXEL_TO_CM_CONVERSOR
+        point.x * SCALE * PIXEL_TO_MM_CONVERSOR * RATIO / CONVERSOR_MM_M, point.y * SCALE * PIXEL_TO_MM_CONVERSOR * RATIO/ CONVERSOR_MM_M
     )
 
     return newPoint

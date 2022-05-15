@@ -7,14 +7,18 @@ from PyQt5.QtCore import *
 import numpy as np
 
 position = 0
+RATIO = 1
+WIDTH = 1246*RATIO  # Pixels
+HEIGTH = 884*RATIO # Pixels
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.setFixedSize(int(WIDTH), int(HEIGTH))
         self.label = QLabel()
-        canvas = QPixmap(400, 300)
+        canvas = QPixmap("layout vacío.png")
         self.label.setPixmap(canvas)
         self.setCentralWidget(self.label)
 
@@ -28,6 +32,7 @@ class MainWindow(QMainWindow):
             return  # Ignore the first time.
 
         painter = QPainter(self.label.pixmap())
+        painter.drawPixmap(self.rect(), self.label.pixmap())
         painter.setPen(QPen(Qt.red, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
         painter.end()
@@ -70,5 +75,9 @@ lista = list()
 # ex = MouseTracker()
 
 app.exec_()
-
-print(lista)
+print("import numpy as np")
+print("ARRAY = np.array([")
+for element in lista:
+    np.array([[340, 780], [340, 660], [190, 660], [190, 350], [380, 350]])
+    print("[" + str(element.x()) + ", " + str(element.y()) + "], ")
+print("])")
