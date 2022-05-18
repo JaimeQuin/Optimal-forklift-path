@@ -15,20 +15,20 @@ RATIO = 1
 WIDTH = 1246*RATIO  # Pixels
 HEIGTH = 884*RATIO # Pixels
 
-X_AXIS_REAL_DISTANCE = 101.6  # m CHECK
+X_AXIS_REAL_DISTANCE = 144.5  # m CHECK
 X_AXIS = np.array([[0, HEIGTH/2], [WIDTH, HEIGTH/2]])  # X Axis
 X_AXIS_REAL_TIME_10_KMH = X_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s
 
 
-Y_AXIS_REAL_DISTANCE = 76.2  # m CHECK
+Y_AXIS_REAL_DISTANCE = 99.875  # m CHECK
 Y_AXIS = np.array([[WIDTH/2, 0], [WIDTH/2, HEIGTH]])  # Y Axis
 Y_AXIS_REAL_TIME_10_KMH = Y_AXIS_REAL_DISTANCE / (CALIBRATION_VELOCITY / 3.6)  # s CHECK
 
-SCALE = 425  # 1 : SCALE mm
+SCALE = 427  # 1 : SCALE mm
 CONVERSOR_MM_M = 1000
 FORKLIFT_VELOCITY = 10  # km/h
-PIXEL_TO_MM_CONVERSOR = 0.264583333
-
+#PIXEL_TO_MM_CONVERSOR = 0.264583333
+PIXEL_TO_MM_CONVERSOR = 0.27
 
 
 # creating class for window
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     distance = _calculateDistanceInRealScale(listOfPoints)
 
     # Printing in terminal calibration data
-    _printCalibrationInfo(
+    '''_printCalibrationInfo(
         CALIBRATION_VELOCITY,
         X_AXIS_REAL_DISTANCE,
         X_AXIS_REAL_TIME_10_KMH,
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         _returnTimeSpent,
         xCalibrationDistance,
         yCalibrationDistance,
-    )
+    )'''
 
     # Printing in terminal path data
     _printPathInfo(FORKLIFT_VELOCITY, _returnTimeSpent, distance)
